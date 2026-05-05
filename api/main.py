@@ -4,11 +4,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from api.db.client import ping
+from api.limiter import limiter
 from api.routes import alerts, assets, auth, digest, health, risk, scan, threats
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -18,12 +18,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("lucius.api")
-
-# ── Rate limiter ──────────────────────────────────────────────────────────────
-# Defined at module level so routes can import it:
-#   from api.main import limiter
-
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 

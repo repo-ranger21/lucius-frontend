@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request
 
 from api.db.client import ping
-from api.main import limiter
+from api.limiter import limiter
 from api.models.schemas import Response
 
 router = APIRouter(tags=["health"])

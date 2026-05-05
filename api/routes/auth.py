@@ -8,7 +8,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from api.db.client import db
-from api.main import limiter
+from api.limiter import limiter
 from api.models.schemas import LoginRequest, Response, TokenResponse
 
 router = APIRouter(tags=["auth"])

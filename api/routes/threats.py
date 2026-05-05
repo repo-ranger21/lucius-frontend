@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from fastapi import APIRouter, Depends, Request
 
-from api.main import limiter
+from api.limiter import limiter
 from api.models.schemas import Response, ThreatFeedData, ThreatItem
 from api.routes.auth import get_current_org_id
 

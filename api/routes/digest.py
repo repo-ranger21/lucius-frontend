@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from api.db.client import db
-from api.main import limiter
+from api.limiter import limiter
 from api.models.schemas import DigestData, Response
 from api.routes.auth import get_current_org_id
 
