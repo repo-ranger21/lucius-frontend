@@ -1,0 +1,33 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Frontend build output
+node_modules/
+dist/
+.vite/
+
+# Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/settings.json
+
+# Logs
+*.log
+uvicorn.log
