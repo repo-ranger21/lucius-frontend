@@ -8,6 +8,7 @@ const NAVS = [
   { id: 'assets',   icon: '◎', label: 'Assets',   path: '/assets' },
   { id: 'topology', icon: '⬡', label: 'Topology', path: '/topology' },
   { id: 'intel',    icon: '◉', label: 'Intel',    path: '/intel' },
+  { id: 'proxy',    icon: '⬢', label: 'Proxy',    path: '/proxy' },
 ];
 
 export default function DashboardShell() {
@@ -15,7 +16,7 @@ export default function DashboardShell() {
   const location = useLocation();
   const [time, setTime] = useState(new Date());
 
-  const token = localStorage.getItem('lucius_token');
+  const token = sessionStorage.getItem('lucius_token');
 
   useEffect(() => {
     if (!token) navigate('/login', { replace: true });
@@ -35,7 +36,7 @@ export default function DashboardShell() {
   const dStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   function handleSignOut() {
-    localStorage.removeItem('lucius_token');
+    sessionStorage.removeItem('lucius_token');
     navigate('/login', { replace: true });
   }
 

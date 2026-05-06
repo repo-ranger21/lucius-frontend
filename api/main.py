@@ -9,7 +9,7 @@ from slowapi.errors import RateLimitExceeded
 
 from api.db.client import ping
 from api.limiter import limiter
-from api.routes import alerts, assets, auth, digest, health, risk, scan, threats
+from api.routes import alerts, assets, auth, digest, health, proxy, risk, scan, threats
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -70,6 +70,7 @@ app.include_router(assets.router,  prefix="/api/v1")
 app.include_router(scan.router,    prefix="/api/v1")
 app.include_router(threats.router, prefix="/api/v1")
 app.include_router(digest.router,  prefix="/api/v1")
+app.include_router(proxy.router,   prefix="/api/v1")
 
 # ── Root ──────────────────────────────────────────────────────────────────────
 

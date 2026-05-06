@@ -52,6 +52,10 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  request(path, options = {}) {
+    return request(path, options);
+  },
+
   login(email, password) {
     return request('/api/v1/auth/login', {
       method: 'POST',
@@ -99,5 +103,41 @@ export const api = {
 
   getWeeklyDigest() {
     return request('/api/v1/digest/weekly');
+  },
+
+  getProxySummary() {
+    return request('/api/v1/proxy/summary');
+  },
+
+  getProxyEvents(page = 1) {
+    return request(`/api/v1/proxy/events?page=${page}`);
+  },
+
+  getProxyConfig() {
+    return request('/api/v1/proxy/config');
+  },
+
+  updateProxyConfig(body) {
+    return request('/api/v1/proxy/config', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  getBlocklist() {
+    return request('/api/v1/proxy/blocklist');
+  },
+
+  addToBlocklist(body) {
+    return request('/api/v1/proxy/blocklist', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  removeFromBlocklist(id) {
+    return request(`/api/v1/proxy/blocklist/${id}/remove`, {
+      method: 'POST',
+    });
   },
 };
