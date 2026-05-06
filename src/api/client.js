@@ -1,92 +1,103 @@
-const BASE = import.meta.env.VITE_API_URL ?? '';
-const API_KEY = import.meta.env.VITE_INTERNAL_API_KEY ?? '';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const TOKEN_KEY = 'lucius_token';
 
 function getToken() {
-  return localStorage.getItem('lucius_token');
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
-function headers(authenticated = true) {
-  const h = {
-    'Content-Type': 'application/json',
-    'X-API-Key': API_KEY,
-  };
-  if (authenticated) {
-    const token = getToken();
-    if (token) h['Authorization'] = `Bearer ${token}`;
+async function parseBody(response) {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
   }
-  return h;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    ...options,
-    headers: { ...headers(options.authenticated !== false), ...options.headers },
+  const token = getToken();
+  const headers = {
+    ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+    ...options.headers,
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: options.method || 'GET',
+    headers,
+    body: options.body,
   });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.error ?? 'Request failed');
-  return json.data;
+
+  if (response.status === 401) {
+    sessionStorage.clear();
+    window.location.reload();
+    throw new Error('HTTP 401');
+  }
+
+  const body = await parseBody(response);
+
+  if (!response.ok) {
+    throw new Error(body?.error || `HTTP ${response.status}`);
+  }
+
+  return body;
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+export const api = {
+  login(email, password) {
+    return request('/api/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  },
 
-export async function login(email, password) {
-  const data = await request('/api/v1/auth/login', {
-    method: 'POST',
-    authenticated: false,
-    body: JSON.stringify({ email, password }),
-  });
-  localStorage.setItem('lucius_token', data.access_token);
-  return data;
-}
+  logout() {
+    return request('/api/v1/auth/logout', {
+      method: 'POST',
+    });
+  },
 
-export async function logout() {
-  await request('/api/v1/auth/logout', { method: 'POST' });
-  localStorage.removeItem('lucius_token');
-}
+  getRiskScore() {
+    return request('/api/v1/risk-score');
+  },
 
-// ── Risk ──────────────────────────────────────────────────────────────────────
+  getAlerts(page = 1, sev = 'all') {
+    return request(`/api/v1/alerts?page=${page}&severity=${encodeURIComponent(sev)}`);
+  },
 
-export async function getRiskScore() {
-  return request('/api/v1/risk-score');
-}
+  resolveAlert(id) {
+    return request(`/api/v1/alerts/${id}/resolve`, {
+      method: 'POST',
+    });
+  },
 
-// ── Alerts ────────────────────────────────────────────────────────────────────
+  getAssets() {
+    return request('/api/v1/assets');
+  },
 
-export async function getAlerts(page = 1, severity = 'all') {
-  return request(`/api/v1/alerts?page=${page}&severity=${severity}`);
-}
+  triggerScan() {
+    return request('/api/v1/scan/trigger', {
+      method: 'POST',
+    });
+  },
 
-export async function resolveAlert(alertId) {
-  return request(`/api/v1/alerts/${alertId}/resolve`, { method: 'POST' });
-}
+  getScanStatus() {
+    return request('/api/v1/scan/status');
+  },
 
-// ── Assets ────────────────────────────────────────────────────────────────────
+  getThreats() {
+    return request('/api/v1/threats/feed');
+  },
 
-export async function getAssets() {
-  return request('/api/v1/assets');
-}
-
-// ── Scan ──────────────────────────────────────────────────────────────────────
-
-export async function triggerScan(assetIds = null) {
-  return request('/api/v1/scan/trigger', {
-    method: 'POST',
-    body: JSON.stringify({ asset_ids: assetIds }),
-  });
-}
-
-export async function getScanStatus() {
-  return request('/api/v1/scan/status');
-}
-
-// ── Threats ───────────────────────────────────────────────────────────────────
-
-export async function getThreatsFeed() {
-  return request('/api/v1/threats/feed');
-}
-
-// ── Digest ────────────────────────────────────────────────────────────────────
-
-export async function getWeeklyDigest() {
-  return request('/api/v1/digest/weekly');
-}
+  getWeeklyDigest() {
+    return request('/api/v1/digest/weekly');
+  },
+};

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api/client.js';
+import { api } from '../api/client.js';
 import { CSS, C } from '../styles/theme.js';
+
+const TOKEN_KEY = 'lucius_token';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,7 +17,14 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const response = await api.login(email, password);
+      const token = response?.data?.access_token;
+
+      if (!token) {
+        throw new Error('Login token missing');
+      }
+
+      sessionStorage.setItem(TOKEN_KEY, token);
       navigate('/command', { replace: true });
     } catch (err) {
       setError(err.message ?? 'Login failed');

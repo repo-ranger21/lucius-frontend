@@ -1,125 +1,253 @@
-import { useState, useEffect } from 'react';
-import { C, healthColor } from '../../styles/theme.js';
-import { getAssets, triggerScan, getScanStatus } from '../../api/client.js';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { api } from '../../api/client';
+import * as theme from '../../styles/theme';
+
+const { C } = theme;
+const FONTS = theme.FONTS ?? {
+  display: "'Russo One',sans-serif",
+  mono: "'Fira Code',monospace",
+};
 
 const TYPE_ICON = { WEB: '🌐', CLOUD: '☁', APP: '📱', EMAIL: '✉', EDGE: '⚡', API: '◈' };
 
-const SEV_BORDER = s =>
-  s === 'crit' ? 'rgba(255,68,101,0.35)' :
-  s === 'warn' ? 'rgba(255,155,67,0.28)' :
-  'rgba(79,142,247,0.13)';
+function healthColor(score) {
+  return score >= 80 ? C.green : score >= 55 ? C.orange : C.red;
+}
 
-function HealthBar({ score }) {
-  const c = healthColor(score);
+function severityColor(severity) {
+  return severity === 'crit' || severity === 'critical'
+    ? C.red
+    : severity === 'warn' || severity === 'warning'
+      ? C.orange
+      : C.green;
+}
+
+function severityLabel(severity) {
+  return severity === 'crit' || severity === 'critical'
+    ? 'CRITICAL'
+    : severity === 'warn' || severity === 'warning'
+      ? 'WARNING'
+      : 'HEALTHY';
+}
+
+function lastScannedLabel(value) {
+  if (!value) {
+    return 'Never scanned';
+  }
+
+  const diffMs = Date.now() - new Date(value).getTime();
+  const hours = Math.max(0, Math.floor(diffMs / 3600000));
+  return `Scanned ${hours}h ago`;
+}
+
+function truncateName(name) {
+  if (!name) return '';
+  return name.length > 28 ? `${name.slice(0, 28)}...` : name;
+}
+
+function SkeletonCard() {
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.muted, letterSpacing: '0.06em' }}>HEALTH</span>
-        <span style={{ fontFamily: "'Fira Code',monospace", fontSize: 11, fontWeight: 600, color: c }}>{score}</span>
+    <div className="card card-topline" style={{ minHeight: 160, padding: '18px 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="pulse" style={{ width: 20, height: 20, borderRadius: 6, background: 'rgba(79,142,247,0.15)' }} />
+          <div>
+            <div className="pulse" style={{ width: 120, height: 12, borderRadius: 6, background: 'rgba(79,142,247,0.12)', marginBottom: 6 }} />
+            <div className="pulse" style={{ width: 42, height: 9, borderRadius: 6, background: 'rgba(79,142,247,0.08)' }} />
+          </div>
+        </div>
+        <div className="pulse" style={{ width: 48, height: 18, borderRadius: 8, background: 'rgba(79,142,247,0.1)' }} />
       </div>
-      <div className="health-track">
-        <div className="health-fill" style={{ width: `${score}%`, background: `linear-gradient(90deg,${c}77,${c})` }} />
+      <div className="pulse" style={{ width: 64, height: 36, borderRadius: 8, background: 'rgba(79,142,247,0.12)', marginBottom: 14 }} />
+      <div className="health-track" style={{ marginBottom: 14 }}>
+        <div className="pulse" style={{ width: '62%', height: '100%', background: 'linear-gradient(90deg, rgba(79,142,247,0.16), rgba(79,142,247,0.08))' }} />
+      </div>
+      <div className="pulse" style={{ width: '56%', height: 10, borderRadius: 6, background: 'rgba(79,142,247,0.08)', marginBottom: 8 }} />
+      <div className="pulse" style={{ width: '38%', height: 9, borderRadius: 6, background: 'rgba(79,142,247,0.06)' }} />
+    </div>
+  );
+}
+
+function AssetCard({ asset, expanded, onToggle }) {
+  const score = asset.health_score ?? 0;
+  const scoreColor = healthColor(score);
+  const sevColor = severityColor(asset.severity);
+
+  return (
+    <div
+      className="card card-topline fade-in"
+      onClick={onToggle}
+      style={{
+        padding: '18px 20px',
+        cursor: 'pointer',
+        borderColor: expanded ? sevColor : 'rgba(79,142,247,0.13)',
+        boxShadow: expanded ? `0 0 18px ${sevColor}22` : 'none',
+        transition: 'border-color 0.18s, box-shadow 0.18s',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <span style={{ fontSize: 20, flexShrink: 0 }}>{TYPE_ICON[asset.type] ?? '◈'}</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{truncateName(asset.name)}</div>
+          </div>
+        </div>
+        <span className="badge" style={{ color: C.blue, background: C.blueD, border: `1px solid ${C.blue}33`, flexShrink: 0, fontFamily: FONTS.mono, fontSize: 9 }}>{asset.type}</span>
+      </div>
+
+      <div style={{ fontFamily: FONTS.display, fontSize: 36, lineHeight: 1, color: scoreColor, textShadow: `0 0 18px ${scoreColor}44`, marginBottom: 12 }}>
+        {score}
+      </div>
+
+      <div className="health-track" style={{ marginBottom: 12 }}>
+        <div className="health-fill" style={{ width: `${score}%`, background: `linear-gradient(90deg,${scoreColor}77,${scoreColor})` }} />
+      </div>
+
+      {expanded ? (
+        <div style={{ marginBottom: 12, padding: '12px 12px 10px', borderRadius: 10, border: `1px solid ${sevColor}33`, background: 'rgba(255,255,255,0.02)' }}>
+          <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Open alerts for this asset</div>
+          <div style={{ fontSize: 12, color: C.dim }}>Run a scan to see per-asset findings.</div>
+        </div>
+      ) : null}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor, boxShadow: `0 0 5px ${sevColor}` }} />
+        <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: sevColor, letterSpacing: '0.08em' }}>{severityLabel(asset.severity)}</span>
+      </div>
+
+      <div style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim, letterSpacing: '0.04em' }}>
+        {lastScannedLabel(asset.last_scanned_at ?? asset.last_scan_at ?? asset.updated_at)}
       </div>
     </div>
   );
 }
 
 export default function AssetMap() {
-  const [assets, setAssets]     = useState([]);
-  const [scan, setScan]         = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [scanLoading, setScanLoading] = useState(false);
-  const [error, setError]       = useState(null);
+  const [assets, setAssets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanStatus, setScanStatus] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const pollingRef = useRef(null);
 
-  useEffect(() => { load(); }, []);
+  async function fetchAssets({ initial = false } = {}) {
+    if (initial) {
+      setLoading(true);
+    }
 
-  async function load() {
-    setLoading(true);
-    setError(null);
-    const [assetsRes, scanRes] = await Promise.allSettled([getAssets(), getScanStatus()]);
-    if (assetsRes.status === 'fulfilled') setAssets(assetsRes.value.assets ?? []);
-    if (scanRes.status   === 'fulfilled') setScan(scanRes.value);
-    setLoading(false);
-  }
-
-  async function handleScanTrigger() {
-    setScanLoading(true);
-    setError(null);
     try {
-      const result = await triggerScan(null);
-      setScan(result);
+      const response = await api.getAssets();
+      setAssets(Array.isArray(response?.data?.assets) ? response.data.assets : []);
+      setError(null);
     } catch (err) {
-      setError(err.message ?? 'Scan trigger failed');
+      setError(err.message ?? 'Failed to load assets');
+      setBannerDismissed(false);
     } finally {
-      setScanLoading(false);
+      if (initial) {
+        setLoading(false);
+      }
     }
   }
 
-  const scanBusy = scan?.status === 'running' || scan?.status === 'pending';
+  function stopPolling() {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: C.muted, fontFamily: "'Fira Code',monospace", fontSize: 12, letterSpacing: '0.1em' }}>
-      LOADING...
-    </div>
-  );
+  useEffect(() => {
+    fetchAssets({ initial: true });
+
+    return () => {
+      stopPolling();
+    };
+  }, []);
+
+  async function pollScanStatus() {
+    try {
+      const response = await api.getScanStatus();
+      const status = response?.data?.status ?? null;
+
+      if (status === 'complete' || status === 'failed') {
+        stopPolling();
+        setScanning(false);
+        setScanStatus(status === 'complete' ? 'Scan complete' : 'Scan failed');
+        await fetchAssets();
+      } else {
+        setScanStatus('SCANNING...');
+      }
+    } catch (err) {
+      stopPolling();
+      setScanning(false);
+      setError(err.message ?? 'Failed to check scan status');
+      setBannerDismissed(false);
+    }
+  }
+
+  async function handleTriggerScan() {
+    setError(null);
+    setBannerDismissed(false);
+    setScanStatus('SCANNING...');
+
+    try {
+      await api.triggerScan();
+      setScanning(true);
+      stopPolling();
+      pollingRef.current = setInterval(() => {
+        pollScanStatus();
+      }, 3000);
+      await pollScanStatus();
+    } catch (err) {
+      setScanning(false);
+      setScanStatus(null);
+      setError(err.message ?? 'Failed to trigger scan');
+      setBannerDismissed(false);
+    }
+  }
+
+  const assetCards = useMemo(() => assets, [assets]);
 
   return (
     <div style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
-
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <div>
-          <div style={{ fontFamily: "'Russo One',sans-serif", fontSize: 14, letterSpacing: '0.1em', marginBottom: 4 }}>ASSET MAP</div>
-          <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 10, color: C.dim }}>
-            {assets.length} assets monitored{scan ? ` · Last scan: ${scan.status}` : ''}
+          <div style={{ fontFamily: FONTS.display, fontSize: 14, letterSpacing: '0.1em', marginBottom: 4 }}>ASSET MAP</div>
+          <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.dim }}>
+            {loading ? '—' : `${assets.length} assets monitored`}{scanStatus ? ` · ${scanStatus}` : ''}
           </div>
         </div>
-        <button onClick={handleScanTrigger} disabled={scanLoading || scanBusy} style={{
-          fontFamily: "'Fira Code',monospace", fontSize: 11, fontWeight: 600,
-          padding: '8px 20px', borderRadius: 8, cursor: scanLoading || scanBusy ? 'not-allowed' : 'pointer',
-          letterSpacing: '0.08em', transition: 'all 0.15s',
-          background: 'rgba(79,142,247,0.12)', border: '1px solid rgba(79,142,247,0.4)',
-          color: C.blue, opacity: scanLoading || scanBusy ? 0.55 : 1,
-        }}>
-          {scanLoading ? 'TRIGGERING...' : scanBusy ? '⟳ SCANNING...' : '⟳ TRIGGER SCAN'}
+        <button className={`resolve-btn${scanning ? ' pulse' : ''}`} disabled={scanning} onClick={handleTriggerScan} style={{ minWidth: 138, opacity: scanning ? 0.7 : 1 }}>
+          {scanning ? 'SCANNING...' : 'TRIGGER SCAN'}
         </button>
       </div>
 
-      {error && (
-        <div style={{ padding: '10px 16px', background: 'rgba(255,68,101,0.08)', border: '1px solid rgba(255,68,101,0.22)', borderRadius: 8, fontSize: 12, color: C.red, fontFamily: "'Fira Code',monospace", flexShrink: 0 }}>
-          {error}
+      {error && !bannerDismissed ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, border: `1px solid ${C.orange}66`, background: 'rgba(255,155,67,0.08)', color: C.orange, fontFamily: FONTS.mono, fontSize: 10, letterSpacing: '0.02em', flexShrink: 0 }}>
+          <span>{error}</span>
+          <button onClick={() => setBannerDismissed(true)} style={{ background: 'transparent', border: 'none', color: C.orange, cursor: 'pointer', fontFamily: FONTS.mono, fontSize: 12, lineHeight: 1 }}>×</button>
         </div>
-      )}
+      ) : null}
 
-      {/* Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14, overflow: 'auto', flex: 1, alignContent: 'start' }}>
-        {assets.length === 0 ? (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', color: C.dim, fontFamily: "'Fira Code',monospace", fontSize: 11 }}>
-            No assets registered · Add assets to start monitoring
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, overflow: 'auto', flex: 1, alignContent: 'start' }}>
+        {loading ? (
+          Array.from({ length: 6 }, (_, index) => <SkeletonCard key={index} />)
+        ) : assetCards.length === 0 ? (
+          <div style={{ gridColumn: '1 / -1', minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: C.dim, fontFamily: FONTS.mono, fontSize: 11, padding: '24px 0' }}>
+            No assets registered. Add your first asset to begin monitoring.
           </div>
-        ) : assets.map(a => {
-          const score  = a.health_score ?? 0;
-          const sevMap = { crit: C.red, warn: C.orange, good: C.green };
-          const sevCol = sevMap[a.severity] ?? C.green;
-          return (
-            <div key={a.id} className="card fade-in" style={{ padding: '18px 20px', borderColor: SEV_BORDER(a.severity) }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 20 }}>{TYPE_ICON[a.type] ?? '◈'}</span>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: C.text, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
-                    <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.dim, letterSpacing: '0.08em', marginTop: 2 }}>{a.type}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 9px', background: `${sevCol}18`, borderRadius: 6, border: `1px solid ${sevCol}33` }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: sevCol, boxShadow: a.severity !== 'good' ? `0 0 5px ${sevCol}` : 'none' }} />
-                  <span style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: sevCol, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{a.severity}</span>
-                </div>
-              </div>
-              <HealthBar score={score} />
-            </div>
-          );
-        })}
+        ) : (
+          assetCards.map((asset) => (
+            <AssetCard
+              key={asset.id}
+              asset={asset}
+              expanded={expandedId === asset.id}
+              onToggle={() => setExpandedId(expandedId === asset.id ? null : asset.id)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

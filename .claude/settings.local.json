@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -Force)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Test-Path \"C:\\\\Users\\\\TheOp\\\\Downloads\\\\lucius-frontend\\\\venv\")",
+      "Bash(/c/Python314/python -m venv venv)",
+      "Bash(npx skills *)",
+      "mcp__claude_ai_Supabase__get_project",
+      "mcp__claude_ai_Supabase__list_tables"
+    ]
+  }
+}
