@@ -61,12 +61,12 @@ function SkeletonRow() {
   );
 }
 
-function AlertRow({ alert, checked, onToggle, onResolve, resolving, isMobile }) {
+function AlertRow({ alert, checked, onToggle, onResolve, resolving }) {
   const color = severityColor(alert.severity);
   const [tagColor, tagBg] = TAG_COLORS[alert.tag] ?? [C.blue, 'rgba(79,142,247,0.12)'];
 
   return (
-    <div className="alert-row fade-in" style={{ opacity: alert.resolved ? 0.38 : 1, padding: isMobile ? '16px 0' : undefined }}>
+    <div className="alert-row fade-in mobile-alert-row" style={{ opacity: alert.resolved ? 0.38 : 1 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         {!alert.resolved ? (
           <input
@@ -94,7 +94,7 @@ function AlertRow({ alert, checked, onToggle, onResolve, resolving, isMobile }) 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.dim }}>{timeAgo(alert.created_at)}</span>
             {!alert.resolved ? (
-              <button className="resolve-btn" disabled={resolving} onClick={() => onResolve(alert.id)} style={{ minHeight: isMobile ? 44 : undefined }}>
+              <button className="resolve-btn alert-action-btn" disabled={resolving} onClick={() => onResolve(alert.id)}>
                 {resolving ? 'RESOLVING...' : 'RESOLVE →'}
               </button>
             ) : (
@@ -109,7 +109,6 @@ function AlertRow({ alert, checked, onToggle, onResolve, resolving, isMobile }) 
 
 export default function AlertFeed() {
   useLucius();
-  const isMobile = theme.useIsMobile();
 
   const [activeSeverity, setActiveSeverity] = useState('all');
   const [page, setPage] = useState(1);
@@ -262,14 +261,14 @@ export default function AlertFeed() {
 
   return (
     <div className="page-padding" style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflowX: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 16, flexShrink: 0 }}>
+      <div className="alert-page-header">
         <div>
           <div style={{ fontFamily: FONTS.display, fontSize: 14, letterSpacing: '0.1em', marginBottom: 4 }}>ALERT FEED</div>
           <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.dim }}>{loading ? '—' : total} total alerts</div>
         </div>
-        <div style={{ display: 'flex', gap: 6, overflowX: isMobile ? 'auto' : 'visible', flexWrap: 'nowrap', paddingBottom: isMobile ? 4 : 0, width: isMobile ? '100%' : 'auto' }}>
+        <div className="alert-filter-row">
           {SEVERITIES.map((severity) => (
-            <button key={severity} style={{ ...filterButtonStyle(severity), minWidth: isMobile ? 70 : undefined, flexShrink: 0, minHeight: isMobile ? 44 : undefined }} onClick={() => setActiveSeverity(severity)}>
+            <button key={severity} className="alert-filter-btn" style={filterButtonStyle(severity)} onClick={() => setActiveSeverity(severity)}>
               {severity}
             </button>
           ))}
@@ -286,13 +285,13 @@ export default function AlertFeed() {
           </div>
         ) : null}
 
-        <div style={{ padding: '14px 20px 12px', borderBottom: '1px solid rgba(79,142,247,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: 12, flexShrink: 0 }}>
+        <div className="alert-toolbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
             <span style={{ fontFamily: FONTS.display, fontSize: 13, letterSpacing: '0.1em' }}>PAGINATED FEED</span>
             <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: C.dim }}>{loading ? '—' : `${sortedAlerts.filter((alert) => !alert.resolved).length} unresolved`}</span>
           </div>
           {selectedCount > 0 ? (
-            <button className="resolve-btn" onClick={handleBulkResolve} style={{ width: isMobile ? '100%' : 'auto' }}>Resolve Selected ({selectedCount})</button>
+            <button className="resolve-btn bulk-resolve-btn" onClick={handleBulkResolve}>Resolve Selected ({selectedCount})</button>
           ) : null}
         </div>
 
@@ -313,7 +312,6 @@ export default function AlertFeed() {
                 onToggle={toggleSelected}
                 onResolve={handleResolve}
                 resolving={resolvingIds.has(alert.id)}
-                isMobile={isMobile}
               />
             ))
           )}

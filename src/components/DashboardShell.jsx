@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client.js';
-import { CSS, C, useIsMobile } from '../styles/theme.js';
+import { CSS, C } from '../styles/theme.js';
 
 const NAVS = [
   { id: 'command',  icon: '◈', label: 'Command',  path: '/command' },
@@ -36,18 +36,11 @@ export default function DashboardShell() {
   const location = useLocation();
   const [alertCount, setAlertCount] = useState(0);
   const [critCount, setCritCount] = useState(0);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     let active = true;
 
     async function loadAlertBadge() {
-      if (!isMobile) {
-        setAlertCount(0);
-        setCritCount(0);
-        return;
-      }
-
       try {
         const response = await api.getAlerts();
         if (!active) return;
@@ -68,7 +61,7 @@ export default function DashboardShell() {
     return () => {
       active = false;
     };
-  }, [isMobile, location.pathname]);
+  }, [location.pathname]);
 
   const activeId = NAVS.find(n => location.pathname.startsWith(n.path))?.id ?? 'command';
   const active = activeId;
@@ -136,7 +129,7 @@ export default function DashboardShell() {
         </div>
 
         {/* ── Main ── */}
-        <div className={isMobile ? 'mobile-content' : ''} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 1, position: 'relative', minWidth: 0 }}>
+        <div className="mobile-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 1, position: 'relative', minWidth: 0 }}>
 
           {/* Top bar */}
           <div className="desktop-topbar" style={{ height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between',

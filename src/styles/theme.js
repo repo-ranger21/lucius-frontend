@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Nunito:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -86,6 +84,26 @@ html,body,#root{max-width:100%;overflow-x:hidden;}
 
 /* Mobile content padding */
 .mobile-content { padding-bottom: 72px !important; }
+.command-main{min-height:0;}
+.command-side{display:flex;flex-direction:column;gap:16px;min-height:0;}
+.gauge-wrap{width:200px;max-width:100%;margin:0 auto;}
+.command-alert-list{flex:1;overflow:auto;padding:4px 20px;}
+.alert-page-header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-shrink:0;}
+.alert-filter-row{display:flex;gap:6px;}
+.alert-filter-btn{flex-shrink:0;}
+.alert-toolbar{padding:14px 20px 12px;border-bottom:1px solid rgba(79,142,247,0.07);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-shrink:0;}
+.bulk-resolve-btn{width:auto;}
+.mobile-alert-row{opacity:1;}
+.alert-action-btn{min-height:auto;}
+.scan-header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-shrink:0;}
+.scan-button{min-width:138px;}
+.asset-score{font-size:36px;}
+.intel-grid{display:grid;grid-template-columns:3fr 2fr;gap:18px;flex:1;min-height:0;}
+.intel-panel{display:flex;flex-direction:column;min-height:0;}
+.proxy-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-shrink:0;}
+.proxy-stats{display:flex;gap:10px;flex-shrink:0;}
+.proxy-codeblock{display:flex;justify-content:space-between;align-items:center;gap:0;}
+.proxy-form{display:flex;gap:10px;flex-wrap:wrap;}
 
 .health-track{height:3px;border-radius:2px;background:rgba(255,255,255,0.05);overflow:hidden;}
 .health-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(0.23,1,0.32,1);}
@@ -116,7 +134,27 @@ html,body,#root{max-width:100%;overflow-x:hidden;}
   .desktop-topbar { padding: 0 16px !important; height: 52px !important; }
   .stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
   .content-grid { grid-template-columns: 1fr !important; }
+  .command-main { order: 2; }
+  .command-side { order: 1; gap: 10px !important; }
+  .command-alert-list { max-height: 400px; }
+  .gauge-wrap { width: 160px !important; }
   .asset-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .scan-header { flex-direction: column !important; align-items: flex-start !important; }
+  .scan-button { width: 100% !important; }
+  .asset-score { font-size: 28px !important; }
+  .alert-page-header { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .alert-filter-row { overflow-x: auto !important; flex-wrap: nowrap !important; width: 100% !important; padding-bottom: 4px; }
+  .alert-filter-btn { min-width: 70px !important; }
+  .alert-toolbar { flex-direction: column !important; align-items: stretch !important; }
+  .bulk-resolve-btn { width: 100% !important; }
+  .mobile-alert-row { padding: 16px 0 !important; }
+  .alert-action-btn { min-height: 44px !important; }
+  .intel-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .intel-panel { min-height: 300px !important; }
+  .proxy-header { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; }
+  .proxy-stats { display: none !important; }
+  .proxy-codeblock { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+  .proxy-form { flex-direction: column !important; }
   .page-padding { padding: 14px 16px !important; }
   .gauge-card { grid-column: span 2 !important; }
   .l-root { overflow-x: hidden !important; }
@@ -132,27 +170,6 @@ export const FONTS = {
   mono: "'Fira Code',monospace",
   body: "'Nunito',sans-serif",
 };
-
-export function useIsMobile() {
-  const [mobile, setMobile] = React.useState(
-    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
-  );
-
-  React.useEffect(() => {
-    let timer;
-    const fn = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => setMobile(window.innerWidth <= 768), 150);
-    };
-    window.addEventListener('resize', fn);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', fn);
-    };
-  }, []);
-
-  return mobile;
-}
 
 export const C = {
   blue: '#4F8EF7', blueD: 'rgba(79,142,247,0.12)', blueB: 'rgba(79,142,247,0.35)',

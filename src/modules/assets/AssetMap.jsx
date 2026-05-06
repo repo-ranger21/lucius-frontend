@@ -68,7 +68,7 @@ function SkeletonCard() {
   );
 }
 
-function AssetCard({ asset, expanded, onToggle, isMobile }) {
+function AssetCard({ asset, expanded, onToggle }) {
   const score = asset.health_score ?? 0;
   const scoreColor = healthColor(score);
   const sevColor = severityColor(asset.severity);
@@ -95,7 +95,7 @@ function AssetCard({ asset, expanded, onToggle, isMobile }) {
         <span className="badge" style={{ color: C.blue, background: C.blueD, border: `1px solid ${C.blue}33`, flexShrink: 0, fontFamily: FONTS.mono, fontSize: 9 }}>{asset.type}</span>
       </div>
 
-      <div style={{ fontFamily: FONTS.display, fontSize: isMobile ? 28 : 36, lineHeight: 1, color: scoreColor, textShadow: `0 0 18px ${scoreColor}44`, marginBottom: 12 }}>
+      <div className="asset-score" style={{ fontFamily: FONTS.display, lineHeight: 1, color: scoreColor, textShadow: `0 0 18px ${scoreColor}44`, marginBottom: 12 }}>
         {score}
       </div>
 
@@ -131,7 +131,6 @@ export default function AssetMap() {
   const [scanStatus, setScanStatus] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const pollingRef = useRef(null);
-  const isMobile = theme.useIsMobile();
 
   async function fetchAssets({ initial = false } = {}) {
     if (initial) {
@@ -213,14 +212,14 @@ export default function AssetMap() {
 
   return (
     <div className="page-padding" style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%', overflowX: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 16, flexShrink: 0 }}>
+      <div className="scan-header">
         <div>
           <div style={{ fontFamily: FONTS.display, fontSize: 14, letterSpacing: '0.1em', marginBottom: 4 }}>ASSET MAP</div>
           <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.dim }}>
             {loading ? '—' : `${assets.length} assets monitored`}{scanStatus ? ` · ${scanStatus}` : ''}
           </div>
         </div>
-        <button className={`resolve-btn${scanning ? ' pulse' : ''}`} disabled={scanning} onClick={handleTriggerScan} style={{ minWidth: 138, width: isMobile ? '100%' : 'auto', opacity: scanning ? 0.7 : 1 }}>
+        <button className={`resolve-btn scan-button${scanning ? ' pulse' : ''}`} disabled={scanning} onClick={handleTriggerScan} style={{ opacity: scanning ? 0.7 : 1 }}>
           {scanning ? 'SCANNING...' : 'TRIGGER SCAN'}
         </button>
       </div>
@@ -232,7 +231,7 @@ export default function AssetMap() {
         </div>
       ) : null}
 
-      <div className="asset-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', gap: isMobile ? 10 : 16, overflowY: 'auto', overflowX: 'hidden', flex: 1, alignContent: 'start' }}>
+      <div className="asset-grid" style={{ display: 'grid', gap: 16, overflowY: 'auto', overflowX: 'hidden', flex: 1, alignContent: 'start' }}>
         {loading ? (
           Array.from({ length: 6 }, (_, index) => <SkeletonCard key={index} />)
         ) : assetCards.length === 0 ? (
@@ -244,7 +243,6 @@ export default function AssetMap() {
             <AssetCard
               key={asset.id}
               asset={asset}
-              isMobile={isMobile}
               expanded={expandedId === asset.id}
               onToggle={() => setExpandedId(expandedId === asset.id ? null : asset.id)}
             />

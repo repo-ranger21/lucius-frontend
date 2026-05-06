@@ -90,7 +90,6 @@ function ThreatItem({ threat }) {
 }
 
 export default function ThreatIntel() {
-  const isMobile = theme.useIsMobile();
   const [threats, setThreats] = useState([]);
   const [threatsLoading, setThreatsLoading] = useState(true);
   const [threatsError, setThreatsError] = useState(null);
@@ -174,8 +173,8 @@ export default function ThreatIntel() {
         <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.dim }}>Live CVE feed · Weekly executive brief</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '3fr 2fr', gap: isMobile ? 10 : 18, flex: 1, minHeight: 0 }}>
-        <div className="card card-topline" style={{ display: 'flex', flexDirection: 'column', minHeight: isMobile ? 300 : 0 }}>
+      <div className="intel-grid">
+        <div className="card card-topline intel-panel">
           <div style={{ padding: '15px 20px 12px', borderBottom: '1px solid rgba(79,142,247,0.07)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em' }}>CVE THREAT FEED</span>
             <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim }}>{threatsLoading ? '—' : `${sortedThreats.length} vulnerabilities`}</span>
@@ -201,7 +200,7 @@ export default function ThreatIntel() {
           </div>
         </div>
 
-        <div className="card card-topline" style={{ display: 'flex', flexDirection: 'column', minHeight: isMobile ? 300 : 0 }}>
+        <div className="card card-topline intel-panel">
           <div style={{ padding: '15px 18px 12px', borderBottom: '1px solid rgba(79,142,247,0.07)', flexShrink: 0 }}>
             <div style={{ fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em', marginBottom: 4 }}>WEEKLY BRIEF</div>
             <div style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim }}>
