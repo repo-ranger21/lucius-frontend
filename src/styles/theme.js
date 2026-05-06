@@ -1,6 +1,9 @@
+import React from 'react';
+
 export const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Nunito:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
+html,body,#root{max-width:100%;overflow-x:hidden;}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:rgba(255,255,255,0.02);}
 ::-webkit-scrollbar-thumb{background:rgba(79,142,247,0.25);border-radius:2px;}
@@ -62,6 +65,28 @@ export const CSS = `
 }
 .resolve-btn:hover{background:rgba(79,142,247,0.12);border-color:rgba(79,142,247,0.65);}
 
+/* Mobile bottom nav */
+.mobile-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(5,7,12,0.97); backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(79,142,247,0.12);
+  display: none;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mobile-nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; padding: 10px 4px 8px;
+  cursor: pointer; gap: 4px; transition: all 0.15s;
+  color: rgba(209,220,240,0.3); border: none; background: transparent;
+  min-height: 56px; position: relative;
+}
+.mobile-nav-item.active { color: #4F8EF7; }
+.mobile-nav-icon { font-size: 20px; line-height: 1; }
+.mobile-nav-label { font-family: 'Fira Code', monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Mobile content padding */
+.mobile-content { padding-bottom: 72px !important; }
+
 .health-track{height:3px;border-radius:2px;background:rgba(255,255,255,0.05);overflow:hidden;}
 .health-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(0.23,1,0.32,1);}
 
@@ -84,7 +109,43 @@ export const CSS = `
 @keyframes countIn{from{opacity:0;transform:scale(0.82);}to{opacity:1;transform:scale(1);}}
 @keyframes ringPop{0%,100%{opacity:0.2;}50%{opacity:0.55;}}
 @keyframes shimmerSlide{0%{background-position:-100% 0;}100%{background-position:200% 0;}}
+
+@media (max-width: 768px) {
+  .mobile-nav { display: flex !important; }
+  .desktop-sidebar { display: none !important; }
+  .desktop-topbar { padding: 0 16px !important; height: 52px !important; }
+  .stat-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .content-grid { grid-template-columns: 1fr !important; }
+  .asset-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .page-padding { padding: 14px 16px !important; }
+  .gauge-card { grid-column: span 2 !important; }
+  .l-root { overflow-x: hidden !important; }
+  .card { max-width: 100%; }
+  .resolve-btn { min-height: 44px !important; font-size: 11px !important; padding: 0 14px !important; }
+  button, input, select, textarea { min-height: 44px; }
+  .badge { font-size: 11px; }
+}
 `;
+
+export const FONTS = {
+  display: "'Russo One',sans-serif",
+  mono: "'Fira Code',monospace",
+  body: "'Nunito',sans-serif",
+};
+
+export function useIsMobile() {
+  const [mobile, setMobile] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  React.useEffect(() => {
+    const fn = () => setMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
+
+  return mobile;
+}
 
 export const C = {
   blue: '#4F8EF7', blueD: 'rgba(79,142,247,0.12)', blueB: 'rgba(79,142,247,0.35)',

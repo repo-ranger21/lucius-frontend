@@ -1,6 +1,6 @@
 import { C, riskColor, riskLabel } from '../styles/theme.js';
 
-export default function RiskGauge({ score }) {
+export default function RiskGauge({ score, size = 200 }) {
   const R = 72, circ = 2 * Math.PI * R;
   const filled = (score / 100) * circ;
   const col = riskColor(score);
@@ -17,7 +17,7 @@ export default function RiskGauge({ score }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 12px 8px' }}>
-      <div style={{ position: 'relative', width: 200, height: 200 }}>
+      <div style={{ position: 'relative', width: size, height: size, maxWidth: '100%' }}>
 
         <svg className="spin" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} viewBox="0 0 200 200">
           <circle cx="100" cy="100" r="97" fill="none" stroke="rgba(79,142,247,0.1)" strokeWidth="1" strokeDasharray="4 8" />
@@ -46,14 +46,14 @@ export default function RiskGauge({ score }) {
         </svg>
 
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-          <div style={{ fontFamily: "'Russo One',sans-serif", fontSize: 54, lineHeight: 1, color: col,
+          <div style={{ fontFamily: "'Russo One',sans-serif", fontSize: size <= 160 ? 42 : 54, lineHeight: 1, color: col,
             textShadow: `0 0 28px ${col}55`, animation: 'countIn 0.9s cubic-bezier(0.23,1,0.32,1) both' }}>
             {score}
           </div>
-          <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginTop: 3 }}>
+          <div style={{ fontFamily: "'Fira Code',monospace", fontSize: size <= 160 ? 11 : 9, color: C.muted, letterSpacing: '0.16em', textTransform: 'uppercase', marginTop: 3 }}>
             Risk Score
           </div>
-          <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 8, color: col, letterSpacing: '0.08em', marginTop: 2 }}>
+          <div style={{ fontFamily: "'Fira Code',monospace", fontSize: size <= 160 ? 11 : 8, color: col, letterSpacing: '0.08em', marginTop: 2 }}>
             ● {riskLabel(score)}
           </div>
         </div>

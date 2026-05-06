@@ -166,6 +166,7 @@ export default function CommandCenter() {
   const { riskScore, alerts, assets, loading, error, resolveAlert, refresh } = useLucius();
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const nextScheduledScan = typeof api.triggerScan === 'function' ? '18h' : '18h';
+  const isMobile = theme.useIsMobile();
 
   const sortedAlerts = useMemo(() => {
     return [...alerts].sort((left, right) => {
@@ -183,15 +184,66 @@ export default function CommandCenter() {
   const visibleRiskScore = loading ? 0 : riskScore;
   const statValue = (value) => (loading ? '—' : value);
 
+  const rightPanel = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 16, minHeight: 0 }}>
+      <div className="card card-topline" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ padding: '15px 18px 11px', borderBottom: '1px solid rgba(79,142,247,0.07)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em' }}>ASSET HEALTH</span>
+          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: C.dim }}>{loading ? '—' : `${assetsProtected} MONITORED`}</span>
+        </div>
+        <div style={{ flex: 1, overflow: 'auto', padding: '4px 18px' }}>
+          {loading ? (
+            Array.from({ length: 3 }, (_, index) => <AssetSkeletonBar key={index} />)
+          ) : assets.length === 0 ? (
+            <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontFamily: FONTS.mono, fontSize: 11 }}>No assets registered</div>
+          ) : (
+            assets.map((asset, index) => <AssetRow key={asset.id ?? asset.name} asset={asset} idx={index} />)
+          )}
+        </div>
+      </div>
+
+      <div className="card card-topline" style={{ padding: '15px 18px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <span style={{ fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.1em' }}>WEEKLY THREATS</span>
+          <span style={{ fontFamily: FONTS.mono, fontSize: 11, color: C.muted }}>7-day trend</span>
+        </div>
+        <div style={{ height: 56 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={TREND}>
+              <defs>
+                <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor={C.blue} stopOpacity={0.6} />
+                  <stop offset="100%" stopColor={C.blue} stopOpacity={1} />
+                </linearGradient>
+              </defs>
+              <Line type="monotone" dataKey="v" stroke="url(#blueGrad)" strokeWidth={2} dot={{ r: 2, fill: C.blue, strokeWidth: 0 }} activeDot={{ r: 4, fill: C.blue }} />
+              <Tooltip
+                contentStyle={{ background: '#0C1422', border: '1px solid rgba(79,142,247,0.25)', borderRadius: 7, fontFamily: 'Fira Code', fontSize: 11, padding: '6px 10px' }}
+                itemStyle={{ color: C.blue }}
+                labelStyle={{ color: C.muted }}
+                cursor={{ stroke: 'rgba(79,142,247,0.2)' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          {TREND.map((point) => (
+            <span key={point.d} style={{ fontFamily: FONTS.mono, fontSize: 11, color: C.dim }}>{point.d}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '256px 1fr 1fr 1fr', gap: 16, flexShrink: 0 }}>
-        <div className="card card-topline" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="page-padding" style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%', overflowX: 'hidden' }}>
+      <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '256px 1fr 1fr 1fr', gap: isMobile ? 10 : 16, flexShrink: 0 }}>
+        <div className="card card-topline gauge-card" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px 0' }}>
             <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.muted, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Overall Risk</span>
             <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.green, background: C.greenD, padding: '2px 9px', borderRadius: 5, border: `1px solid ${C.green}33` }}>LIVE</span>
           </div>
-          <RiskGauge score={visibleRiskScore} />
+          <RiskGauge score={visibleRiskScore} size={isMobile ? 160 : 200} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '0 12px 12px' }}>
             {[
               { label: 'Open Issues', value: statValue(String(unresolvedAlerts.length)), color: unresolvedAlerts.length > 0 ? C.orange : C.green },
@@ -210,7 +262,8 @@ export default function CommandCenter() {
         <StatCard label="Next Scheduled Scan" value={statValue(nextScheduledScan)} sub="Scanner automation arrives in Sprint 3" color={C.orange} icon="⟳" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, flex: 1, minHeight: 0 }}>
+      <div className="content-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: isMobile ? 10 : 16, flex: 1, minHeight: 0 }}>
+        {isMobile ? rightPanel : null}
         <div className="card card-topline" style={{ display: 'flex', flexDirection: 'column', position: 'relative', minHeight: 0 }}>
           <div className="scan-beam" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px 13px', borderBottom: '1px solid rgba(79,142,247,0.07)', flexShrink: 0 }}>
@@ -231,7 +284,7 @@ export default function CommandCenter() {
             </div>
           ) : null}
 
-          <div style={{ flex: 1, overflow: 'auto', padding: '4px 20px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: '4px 20px', maxHeight: isMobile ? 400 : 'none' }}>
             {loading ? (
               Array.from({ length: 3 }, (_, index) => <SkeletonRow key={index} />)
             ) : sortedAlerts.length === 0 ? (
@@ -241,55 +294,7 @@ export default function CommandCenter() {
             )}
           </div>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minHeight: 0 }}>
-          <div className="card card-topline" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ padding: '15px 18px 11px', borderBottom: '1px solid rgba(79,142,247,0.07)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em' }}>ASSET HEALTH</span>
-              <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim }}>{loading ? '—' : `${assetsProtected} MONITORED`}</span>
-            </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '4px 18px' }}>
-              {loading ? (
-                Array.from({ length: 3 }, (_, index) => <AssetSkeletonBar key={index} />)
-              ) : assets.length === 0 ? (
-                <div style={{ padding: '20px 0', textAlign: 'center', color: C.dim, fontFamily: FONTS.mono, fontSize: 11 }}>No assets registered</div>
-              ) : (
-                assets.map((asset, index) => <AssetRow key={asset.id ?? asset.name} asset={asset} idx={index} />)
-              )}
-            </div>
-          </div>
-
-          <div className="card card-topline" style={{ padding: '15px 18px', flexShrink: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <span style={{ fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.1em' }}>WEEKLY THREATS</span>
-              <span style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.muted }}>7-day trend</span>
-            </div>
-            <div style={{ height: 56 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={TREND}>
-                  <defs>
-                    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor={C.blue} stopOpacity={0.6} />
-                      <stop offset="100%" stopColor={C.blue} stopOpacity={1} />
-                    </linearGradient>
-                  </defs>
-                  <Line type="monotone" dataKey="v" stroke="url(#blueGrad)" strokeWidth={2} dot={{ r: 2, fill: C.blue, strokeWidth: 0 }} activeDot={{ r: 4, fill: C.blue }} />
-                  <Tooltip
-                    contentStyle={{ background: '#0C1422', border: '1px solid rgba(79,142,247,0.25)', borderRadius: 7, fontFamily: 'Fira Code', fontSize: 11, padding: '6px 10px' }}
-                    itemStyle={{ color: C.blue }}
-                    labelStyle={{ color: C.muted }}
-                    cursor={{ stroke: 'rgba(79,142,247,0.2)' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-              {TREND.map((point) => (
-                <span key={point.d} style={{ fontFamily: FONTS.mono, fontSize: 8, color: C.dim }}>{point.d}</span>
-              ))}
-            </div>
-          </div>
-        </div>
+        {!isMobile ? rightPanel : null}
       </div>
     </div>
   );

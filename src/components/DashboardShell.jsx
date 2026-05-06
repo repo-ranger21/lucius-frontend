@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { CSS, C } from '../styles/theme.js';
+import { api } from '../api/client.js';
+import { CSS, C, useIsMobile } from '../styles/theme.js';
 
 const NAVS = [
   { id: 'command',  icon: '◈', label: 'Command',  path: '/command' },
@@ -15,17 +16,60 @@ export default function DashboardShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const [time, setTime] = useState(new Date());
+  const [alertCount, setAlertCount] = useState(0);
+  const [critCount, setCritCount] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadAlertBadge() {
+      if (!isMobile) {
+        setAlertCount(0);
+        setCritCount(0);
+        return;
+      }
+
+      try {
+        const response = await api.getAlerts();
+        if (!active) return;
+
+        const alerts = Array.isArray(response?.data?.alerts) ? response.data.alerts : [];
+        const unresolved = alerts.filter((alert) => !alert.resolved);
+        setAlertCount(unresolved.length);
+        setCritCount(unresolved.filter((alert) => alert.severity === 'critical' || alert.severity === 'crit').length);
+      } catch {
+        if (!active) return;
+        setAlertCount(0);
+        setCritCount(0);
+      }
+    }
+
+    loadAlertBadge();
+
+    return () => {
+      active = false;
+    };
+  }, [isMobile, location.pathname]);
+
   const activeId = NAVS.find(n => location.pathname.startsWith(n.path))?.id ?? 'command';
+  const active = activeId;
   const activeLabel = NAVS.find(n => n.id === activeId)?.label ?? 'Command';
 
   const tStr = time.toLocaleTimeString('en-US', { hour12: false });
   const dStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  function onNav(id) {
+    const navItem = NAVS.find((item) => item.id === id);
+    if (navItem) {
+      navigate(navItem.path);
+    }
+  }
 
   function handleSignOut() {
     navigate('/', { replace: true });
@@ -38,7 +82,7 @@ export default function DashboardShell() {
         <div className="bg-grid" />
 
         {/* ── Sidebar ── */}
-        <div style={{ width: 216, flexShrink: 0, display: 'flex', flexDirection: 'column',
+        <div className="desktop-sidebar" style={{ width: 216, flexShrink: 0, display: 'flex', flexDirection: 'column',
           background: 'rgba(5,7,12,0.92)', backdropFilter: 'blur(16px)',
           borderRight: '1px solid rgba(79,142,247,0.09)', zIndex: 10, padding: '22px 12px', position: 'relative' }}>
 
@@ -82,10 +126,10 @@ export default function DashboardShell() {
         </div>
 
         {/* ── Main ── */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 1, position: 'relative' }}>
+        <div className={isMobile ? 'mobile-content' : ''} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 1, position: 'relative', minWidth: 0 }}>
 
           {/* Top bar */}
-          <div style={{ height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          <div className="desktop-topbar" style={{ height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '0 28px', borderBottom: '1px solid rgba(79,142,247,0.07)',
             background: 'rgba(4,6,8,0.75)', backdropFilter: 'blur(12px)', flexShrink: 0 }}>
             <div>
@@ -105,10 +149,32 @@ export default function DashboardShell() {
           </div>
 
           {/* Routed page content */}
-          <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+          <div style={{ flex: 1, overflow: 'auto', position: 'relative', minWidth: 0 }}>
             <Outlet />
           </div>
         </div>
+
+        <nav className="mobile-nav">
+          {NAVS.map(item => (
+            <button
+              key={item.id}
+              className={`mobile-nav-item${active === item.id ? ' active' : ''}`}
+              onClick={() => onNav(item.id)}
+            >
+              <span className="mobile-nav-icon">{item.icon}</span>
+              <span className="mobile-nav-label">{item.label}</span>
+              {item.id === 'alerts' && alertCount > 0 && (
+                <div style={{
+                  position: 'absolute', top: 6, right: 'calc(50% - 16px)',
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: critCount ? '#FF4465' : '#FF9B43',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 8, fontWeight: 800, color: '#fff',
+                }}>{alertCount}</div>
+              )}
+            </button>
+          ))}
+        </nav>
       </div>
     </>
   );

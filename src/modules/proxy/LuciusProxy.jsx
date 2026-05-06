@@ -45,7 +45,7 @@ function SkeletonRow() {
   )
 }
 
-function SetupTab({ config, onToggle, onUpdate }) {
+function SetupTab({ config, onToggle, onUpdate, isMobile }) {
   const [copied, setCopied] = useState(null)
 
   function copy(text, key) {
@@ -89,7 +89,7 @@ function SetupTab({ config, onToggle, onUpdate }) {
     <div style={{
       background: 'rgba(4,6,8,0.8)', border: '1px solid rgba(79,142,247,0.18)',
       borderRadius: 8, padding: '12px 16px', marginBottom: 10,
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 10 : 0,
     }}>
       <div>
         <div style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim, marginBottom: 6, letterSpacing: '0.08em' }}>{label}</div>
@@ -267,7 +267,7 @@ function TrafficTab({ events, total, loading, onLoadMore, loadingMore }) {
   )
 }
 
-function BlocklistTab({ items, loading, onAdd, onRemove }) {
+function BlocklistTab({ items, loading, onAdd, onRemove, isMobile }) {
   const [domain, setDomain] = useState('')
   const [type, setType] = useState('block')
   const [reason, setReason] = useState('')
@@ -293,7 +293,7 @@ function BlocklistTab({ items, loading, onAdd, onRemove }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
       <div className="card card-topline" style={{ padding: '18px 20px', flexShrink: 0 }}>
         <div style={{ fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.1em', marginBottom: 14 }}>ADD DOMAIN</div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
           <input
             value={domain}
             onChange={event => setDomain(event.target.value)}
@@ -400,6 +400,7 @@ function BlocklistTab({ items, loading, onAdd, onRemove }) {
 }
 
 export default function LuciusProxy() {
+  const isMobile = theme.useIsMobile()
   const [tab, setTab] = useState('setup')
   const [summary, setSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(true)
@@ -531,8 +532,8 @@ export default function LuciusProxy() {
   const enabled = config?.enabled ?? false
 
   return (
-    <div style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+    <div className="page-padding" style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%', overflowX: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-start', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 16, flexShrink: 0 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
             <div style={{ fontFamily: FONTS.display, fontSize: 14, letterSpacing: '0.1em' }}>LUCIUSPROXY</div>
@@ -557,7 +558,7 @@ export default function LuciusProxy() {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+        {!isMobile && <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
           {[
             { label: '24H BLOCKED', value: summary?.blocked_24h ?? '—', color: C.red },
             { label: '7D BLOCKED', value: summary?.blocked_7d ?? '—', color: C.orange },
@@ -567,7 +568,7 @@ export default function LuciusProxy() {
               <div style={{ fontFamily: FONTS.mono, fontSize: 8, color: C.dim, letterSpacing: '0.1em', marginTop: 2 }}>{stat.label}</div>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -582,6 +583,7 @@ export default function LuciusProxy() {
             config={config}
             onToggle={handleToggle}
             onUpdate={handleUpdate}
+            isMobile={isMobile}
           />
         )}
         {tab === 'traffic' && (
@@ -599,6 +601,7 @@ export default function LuciusProxy() {
             loading={blocklistLoading}
             onAdd={handleAdd}
             onRemove={handleRemove}
+            isMobile={isMobile}
           />
         )}
       </div>
