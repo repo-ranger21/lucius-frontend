@@ -16,18 +16,10 @@ export default function DashboardShell() {
   const location = useLocation();
   const [time, setTime] = useState(new Date());
 
-  const token = sessionStorage.getItem('lucius_token');
-
-  useEffect(() => {
-    if (!token) navigate('/login', { replace: true });
-  }, [token, navigate]);
-
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  if (!token) return null;
 
   const activeId = NAVS.find(n => location.pathname.startsWith(n.path))?.id ?? 'command';
   const activeLabel = NAVS.find(n => n.id === activeId)?.label ?? 'Command';
@@ -36,8 +28,7 @@ export default function DashboardShell() {
   const dStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   function handleSignOut() {
-    sessionStorage.removeItem('lucius_token');
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   }
 
   return (
