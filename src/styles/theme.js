@@ -139,9 +139,16 @@ export function useIsMobile() {
   );
 
   React.useEffect(() => {
-    const fn = () => setMobile(window.innerWidth <= 768);
+    let timer;
+    const fn = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setMobile(window.innerWidth <= 768), 150);
+    };
     window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', fn);
+    };
   }, []);
 
   return mobile;
