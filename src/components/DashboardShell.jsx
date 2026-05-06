@@ -12,18 +12,31 @@ const NAVS = [
   { id: 'proxy',    icon: '⬢', label: 'Proxy',    path: '/proxy' },
 ];
 
+function ShellClock() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const tStr = time.toLocaleTimeString('en-US', { hour12: false });
+  const dStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  return (
+    <div style={{ textAlign: 'right' }}>
+      <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 15, color: C.blue, letterSpacing: '0.04em', lineHeight: 1 }}>{tStr}</div>
+      <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.dim, marginTop: 2, letterSpacing: '0.04em' }}>{dStr}</div>
+    </div>
+  );
+}
+
 export default function DashboardShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [time, setTime] = useState(new Date());
   const [alertCount, setAlertCount] = useState(0);
   const [critCount, setCritCount] = useState(0);
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    const t = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -60,9 +73,6 @@ export default function DashboardShell() {
   const activeId = NAVS.find(n => location.pathname.startsWith(n.path))?.id ?? 'command';
   const active = activeId;
   const activeLabel = NAVS.find(n => n.id === activeId)?.label ?? 'Command';
-
-  const tStr = time.toLocaleTimeString('en-US', { hour12: false });
-  const dStr = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   function onNav(id) {
     const navItem = NAVS.find((item) => item.id === id);
@@ -141,10 +151,7 @@ export default function DashboardShell() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 15, color: C.blue, letterSpacing: '0.04em', lineHeight: 1 }}>{tStr}</div>
-                <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.dim, marginTop: 2, letterSpacing: '0.04em' }}>{dStr}</div>
-              </div>
+              <ShellClock />
             </div>
           </div>
 
