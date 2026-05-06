@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import DashboardShell from './components/DashboardShell.jsx';
 import Login from './components/Login.jsx';
@@ -9,6 +10,29 @@ import ThreatIntel from './modules/intel/ThreatIntel.jsx';
 import LuciusProxy from './modules/proxy/LuciusProxy.jsx';
 
 export default function App() {
+  useEffect(() => {
+    async function autoLogin() {
+      const existing = sessionStorage.getItem('lucius_token');
+      if (existing) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: 'admin@riversidedental.example.com',
+            password: 'Lucius2024!'
+          })
+        });
+        const data = await res.json();
+        if (data?.data?.access_token) {
+          sessionStorage.setItem('lucius_token', data.data.access_token);
+          window.location.reload();
+        }
+      } catch {}
+    }
+    autoLogin();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

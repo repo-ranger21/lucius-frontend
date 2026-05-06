@@ -74,10 +74,6 @@ export default function DashboardShell() {
     }
   }
 
-  function handleSignOut() {
-    navigate('/', { replace: true });
-  }
-
   return (
     <>
       <style>{CSS}</style>
@@ -117,13 +113,6 @@ export default function DashboardShell() {
             </div>
             <div style={{ fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.dim, lineHeight: 1.9, letterSpacing: '0.04em' }}>
               <div>ENTERPRISE PROTECTION</div>
-              <button onClick={handleSignOut} style={{
-                fontFamily: "'Fira Code',monospace", fontSize: 9, color: C.dim,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                letterSpacing: '0.04em', marginTop: 4,
-              }}>
-                SIGN OUT
-              </button>
             </div>
           </div>
         </div>
