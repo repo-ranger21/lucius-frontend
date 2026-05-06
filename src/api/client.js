@@ -38,8 +38,7 @@ async function request(path, options = {}) {
 
   if (response.status === 401) {
     sessionStorage.clear();
-    window.location.reload();
-    throw new Error('HTTP 401');
+    throw new Error('Authentication required');
   }
 
   const body = await parseBody(response);
