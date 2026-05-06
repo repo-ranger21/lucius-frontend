@@ -1,11 +1,11 @@
 import os
 from datetime import datetime, timedelta, timezone
 
+import bcrypt as _bcrypt
 import bleach
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from api.db.client import db
 from api.limiter import limiter
@@ -15,8 +15,6 @@ router = APIRouter(tags=["auth"])
 
 # auto_error=False so we can return HTTP 401 instead of FastAPI's default 403
 security = HTTPBearer(auto_error=False)
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 _SECRET: str = os.environ["JWT_SECRET_KEY"]
 _ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
@@ -61,7 +59,11 @@ async def login(request: Request, body: LoginRequest):
         # Catch missing row (PostgREST PGRST116) and any DB error — never reveal which
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not user or not pwd_context.verify(body.password, user["password_hash"]):
+    stored_hash = user.get("password_hash") if user else None
+
+    if not user or not stored_hash or not _bcrypt.checkpw(
+        body.password.encode("utf-8"), stored_hash.encode("utf-8")
+    ):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     expires = datetime.now(timezone.utc) + timedelta(minutes=_EXPIRY_MINUTES)
