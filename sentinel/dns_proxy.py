@@ -143,7 +143,9 @@ class LuciusResolver(BaseResolver):
         suspicious, reason = is_suspicious_domain(qname)
         if suspicious:
             log.warning("BLOCKED %s (%s) from %s", qname, reason, client)
-            _blocked_log.append(
+            if len(_blocked_log) > 9000:
+            _blocked_log[:] = _blocked_log[-5000:]
+        _blocked_log.append(
                 {
                     "domain": qname,
                     "reason": reason,

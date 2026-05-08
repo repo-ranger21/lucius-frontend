@@ -165,7 +165,7 @@ function AssetRow({ asset, idx }) {
 export default function CommandCenter() {
   const { riskScore, alerts, assets, loading, error, resolveAlert, refresh } = useLucius();
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const nextScheduledScan = typeof api.triggerScan === 'function' ? '18h' : '18h';
+  const nextScheduledScan = '18h';
 
   const sortedAlerts = useMemo(() => {
     return [...alerts].sort((left, right) => {

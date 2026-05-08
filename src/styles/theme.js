@@ -98,6 +98,9 @@ html,body,#root{max-width:100%;overflow-x:hidden;}
 .scan-header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-shrink:0;}
 .scan-button{min-width:138px;}
 .asset-score{font-size:36px;}
+.stat-grid{grid-template-columns:repeat(4,1fr);}
+.asset-grid{grid-template-columns:repeat(3,1fr);}
+.content-grid{grid-template-columns:minmax(0,1fr) 300px;}
 .intel-grid{display:grid;grid-template-columns:3fr 2fr;gap:18px;flex:1;min-height:0;}
 .intel-panel{display:flex;flex-direction:column;min-height:0;}
 .proxy-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-shrink:0;}

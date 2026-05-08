@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client';
 import * as theme from '../../styles/theme';
 
@@ -68,7 +68,7 @@ function SkeletonCard() {
   );
 }
 
-function AssetCard({ asset, expanded, onToggle }) {
+function AssetCard({ asset, expanded, onToggle, assetAlerts }) {
   const score = asset.health_score ?? 0;
   const scoreColor = healthColor(score);
   const sevColor = severityColor(asset.severity);
@@ -106,7 +106,20 @@ function AssetCard({ asset, expanded, onToggle }) {
       {expanded ? (
         <div style={{ marginBottom: 12, padding: '12px 12px 10px', borderRadius: 10, border: `1px solid ${sevColor}33`, background: 'rgba(255,255,255,0.02)' }}>
           <div style={{ fontFamily: FONTS.mono, fontSize: 10, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Open alerts for this asset</div>
-          <div style={{ fontSize: 12, color: C.dim }}>Run a scan to see per-asset findings.</div>
+          {assetAlerts && assetAlerts.length === 0 ? (
+            <div style={{ fontSize: 12, color: C.green }}>✓ No open alerts for this asset — all clear</div>
+          ) : assetAlerts && assetAlerts.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {assetAlerts.map(alert => (
+                <div key={alert.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: severityColor(alert.severity), marginTop: 3, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>{alert.title}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: C.dim }}>Loading alerts...</div>
+          )}
         </div>
       ) : null}
 
@@ -116,7 +129,7 @@ function AssetCard({ asset, expanded, onToggle }) {
       </div>
 
       <div style={{ fontFamily: FONTS.mono, fontSize: 9, color: C.dim, letterSpacing: '0.04em' }}>
-        {lastScannedLabel(asset.last_scanned_at ?? asset.last_scan_at ?? asset.updated_at)}
+        {lastScannedLabel(asset.last_scanned ?? asset.updated_at)}
       </div>
     </div>
   );
@@ -130,6 +143,7 @@ export default function AssetMap() {
   const [scanning, setScanning] = useState(false);
   const [scanStatus, setScanStatus] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [alerts, setAlerts] = useState([]);
   const pollingRef = useRef(null);
 
   async function fetchAssets({ initial = false } = {}) {
@@ -160,6 +174,9 @@ export default function AssetMap() {
 
   useEffect(() => {
     fetchAssets({ initial: true });
+    api.getAlerts().then(res => {
+      setAlerts(Array.isArray(res?.data?.alerts) ? res.data.alerts : []);
+    }).catch(() => {});
 
     return () => {
       stopPolling();
@@ -208,7 +225,7 @@ export default function AssetMap() {
     }
   }
 
-  const assetCards = useMemo(() => assets, [assets]);
+  const assetCards = assets;
 
   return (
     <div className="page-padding" style={{ padding: '22px 28px', display: 'flex', flexDirection: 'column', gap: 18, height: '100%', overflowX: 'hidden' }}>
@@ -245,6 +262,7 @@ export default function AssetMap() {
               asset={asset}
               expanded={expandedId === asset.id}
               onToggle={() => setExpandedId(expandedId === asset.id ? null : asset.id)}
+              assetAlerts={alerts.filter(a => a.asset_id === asset.id && !a.resolved)}
             />
           ))
         )}

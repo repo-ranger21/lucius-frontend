@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
-import { useLucius } from '../../hooks/useLucius';
 import * as theme from '../../styles/theme';
 
 const { C } = theme;
@@ -108,8 +107,6 @@ function AlertRow({ alert, checked, onToggle, onResolve, resolving }) {
 }
 
 export default function AlertFeed() {
-  useLucius();
-
   const [activeSeverity, setActiveSeverity] = useState('all');
   const [page, setPage] = useState(1);
   const [allAlerts, setAllAlerts] = useState([]);

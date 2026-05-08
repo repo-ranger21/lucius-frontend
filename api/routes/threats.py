@@ -72,10 +72,14 @@ async def get_threats_feed(
     api_key = os.getenv("WORDFENCE_API_KEY", "")
 
     try:
+        headers = {}
+        if api_key:
+            headers["X-Api-Token"] = api_key
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 _WORDFENCE_URL,
-                params={"api_key": api_key, "limit": 20},
+                params={"limit": 20},
+                headers=headers,
             )
             resp.raise_for_status()
             raw = resp.json()

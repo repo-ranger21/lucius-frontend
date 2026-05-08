@@ -15,5 +15,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+            return 'vendor';
+          }
+          if (id.includes('node_modules/d3') || id.includes('node_modules/d3-')) {
+            return 'd3';
+          }
+          if (id.includes('node_modules/recharts')) {
+            return 'charts';
+          }
+        },
+      },
+    },
   },
 });

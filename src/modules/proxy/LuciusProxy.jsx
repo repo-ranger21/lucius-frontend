@@ -462,13 +462,10 @@ export default function LuciusProxy() {
 
     pollRef.current = setInterval(() => {
       fetchSummary()
-      if (tab === 'traffic') {
-        fetchEvents(1)
-      }
     }, 10000)
 
     return () => clearInterval(pollRef.current)
-  }, [fetchBlocklist, fetchConfig, fetchEvents, fetchSummary, tab])
+  }, [fetchBlocklist, fetchConfig, fetchEvents, fetchSummary])
 
   useEffect(() => {
     if (tab === 'traffic') {
